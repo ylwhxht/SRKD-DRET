@@ -1,0 +1,84 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a63d0f31a1d934970a58e502521e415e, type: 3}
+  m_Name: AllDatasacks
+  m_EditorClassIdentifier: 
+  Mappings:
+  - Fullname: AudioSourceClick
+    Datasack: {fileID: 11400000, guid: 59828163b380646019e91da8f8cfaf76, type: 2}
+  - Fullname: AudioSourceEnter
+    Datasack: {fileID: 11400000, guid: b7e5b17cd90c64b3f8cc1908c0b9774f, type: 2}
+  - Fullname: AudioSourceHello
+    Datasack: {fileID: 11400000, guid: 4f7227cb9ab7e4239993de5d75cf6411, type: 2}
+  - Fullname: ExampleOutput
+    Datasack: {fileID: 11400000, guid: 428ad9ffb0502423490bb96a199fbbe7, type: 2}
+  - Fullname: Folder/GUID
+    Datasack: {fileID: 11400000, guid: 0d258429f500d4aec871ab718e1fb32e, type: 2}
+  - Fullname: Folder/Subfolder/GUID
+    Datasack: {fileID: 11400000, guid: 31f5d665364ee4e62aab08afc0e10973, type: 2}
+  - Fullname: GameRunning
+    Datasack: {fileID: 11400000, guid: 601b1a2c5bffb4bf58dc8e30437d5488, type: 2}
+  - Fullname: GUID
+    Datasack: {fileID: 11400000, guid: 4f3ab57170387404288a1a0259d9e2ca, type: 2}
+  - Fullname: HardMode
+    Datasack: {fileID: 11400000, guid: 8cd4f9bcd054e4c5d8490bcb32536bde, type: 2}
+  - Fullname: HighScore
+    Datasack: {fileID: 11400000, guid: 48a76e746f44b41d4a84b10d558fa5d0, type: 2}
+  - Fullname: InputtedData
+    Datasack: {fileID: 11400000, guid: 450610f1e2f5043b8a06c5486d3759cb, type: 2}
+  - Fullname: LastWord
+    Datasack: {fileID: 11400000, guid: 50815ebec6ac1425c8ae03e19b673229, type: 2}
+  - Fullname: PlayerState/Score
+    Datasack: {fileID: 11400000, guid: df5b0d6d6a220455dbb9dadbbe692cff, type: 2}
+  - Fullname: PlayerState/Ships
+    Datasack: {fileID: 11400000, guid: 7126e95b7dafb42bd895f1dd45bd46f5, type: 2}
+  - Fullname: Settings/Channel
+    Datasack: {fileID: 11400000, guid: 297c7f8be614c48dda938f4af6766ae3, type: 2}
+  - Fullname: Settings/InvertControls
+    Datasack: {fileID: 11400000, guid: 81364075c607e48459c2d65724450022, type: 2}
+  - Fullname: Settings/Volume
+    Datasack: {fileID: 11400000, guid: 227e1785b7a8944d294071092208250a, type: 2}
+  - Fullname: SimpleCounter
+    Datasack: {fileID: 11400000, guid: c56f8a73fd72a4969b831494011e390a, type: 2}
+  - Fullname: StartingShips
+    Datasack: {fileID: 11400000, guid: 8cdcae75430c14c08b33aa3016811daa, type: 2}
+  - Fullname: Timer1
+    Datasack: {fileID: 11400000, guid: a8324af9f172044e88b016aa8042cdac, type: 2}
+  - Fullname: Timer1Start
+    Datasack: {fileID: 11400000, guid: 19a7844b00b7944cba01bf20d75d5c18, type: 2}
+  - Fullname: exampleanimator/GoFast
+    Datasack: {fileID: 11400000, guid: 1c5005a39ff7c4b8f81c4c2babcaf67e, type: 2}
+  - Fullname: HealthMeter/AnalogPortion
+    Datasack: {fileID: 11400000, guid: 25240b4fbcd1a43e3b3b6e0dea2601d7, type: 2}
+  - Fullname: HealthMeter/PipsPortion
+    Datasack: {fileID: 11400000, guid: c76d0e2dab4d24ac084091bf57cdf9d5, type: 2}
+  - Fullname: TextObjectSelection
+    Datasack: {fileID: 11400000, guid: 66b6faa2ec07341e98df8b347bdaffe4, type: 2}
+  - Fullname: SliderToImage
+    Datasack: {fileID: 11400000, guid: 47949c79e0fa14a0ca322787f77544be, type: 2}
+  - Fullname: Popup1/AudioButtonPress
+    Datasack: {fileID: 11400000, guid: c20de1b5b54404c568f9205abb93fc39, type: 2}
+  - Fullname: Popup1/Button1Text
+    Datasack: {fileID: 11400000, guid: f2e932da3faa24279a8453ce19c063ea, type: 2}
+  - Fullname: Popup1/Button2Text
+    Datasack: {fileID: 11400000, guid: 5d78cd3ccdfa743a089fb7716cc210fc, type: 2}
+  - Fullname: Popup1/Header
+    Datasack: {fileID: 11400000, guid: 1501eb42e3fdd4f6da492d78fbda70c1, type: 2}
+  - Fullname: Popup1/Message
+    Datasack: {fileID: 11400000, guid: 0c3aaa12d45e648cb9a5dfdb46ccfe08, type: 2}
+  - Fullname: Popup1/Result
+    Datasack: {fileID: 11400000, guid: bd47a8baccc0741219021aa0df1db45e, type: 2}
+  - Fullname: Testing/Array1
+    Datasack: {fileID: 11400000, guid: fb7e41f2a8ebb4940a04323620a28528, type: 2}
+  - Fullname: Testing/Array2
+    Datasack: {fileID: 11400000, guid: 40fd2307ea9c548ba9c6556f976e081f, type: 2}
+  - Fullname: Testing/Debug
+    Datasack: {fileID: 11400000, guid: a8d1d0f9704d64b688d0be57901e3cc4, type: 2}

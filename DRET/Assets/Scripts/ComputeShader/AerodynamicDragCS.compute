@@ -1,0 +1,64 @@
+﻿#pragma kernel CSMain
+
+/**
+ *   This compute shader is meant to accelerate the part of the SprayModel script that 
+ *   computes the aerodynamic drag of each particles. Currently this is not used since
+ *   that part is already multi-threaded.
+ */
+
+struct ComputeBufferParticleFullInfoStruct
+{
+	// Physics properties
+	float3 position;
+	float3 velocity;
+	float3 totalVelocity;
+	// Life cycle properties
+	float remainingLifetime;
+	float startLifetime;
+	// Wind field data
+	float3 windVelocity;
+};
+
+RWStructuredBuffer<ComputeBufferParticleFullInfoStruct> particleFullInfoBuffer;
+
+uniform int particleCount;
+uniform float fixedDeltaTime;
+uniform float particleDiameterMicrometer;
+uniform float3 initialVelocity;
+
+static const float density = 1000.0f;
+static const float dragCoef = 0.2f;
+static const float airDensity = 1.225f;
+static const float PI = 3.14159265f;
+
+[numthreads(64, 1, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+	// index equation : 
+	// 1-D index = threadId.x +
+	// threadId.y * dispatch.x * numthread.x +
+	// threadId.z * dispatch.x * numthread.x * dispatch.y * numthread.y
+	int i = id.x;
+
+	float particleDiameterMeter = particleDiameterMicrometer * 1e-6f; // µm to m
+    // assumed to be perfect sphere
+    float particleVolume = (4.0f / 3.0f) * PI * particleDiameterMeter * particleDiameterMeter * particleDiameterMeter;
+    float particleMass = particleVolume * density;
+
+    // compute aerodynamic drag base on air velocity (which is identical to vehicle velocity)
+    // particle velocity (use "totalVelocity" to also account noise and velocity over lifetime module)
+    // drag coefficient (here we represent with a constant)
+    const float dragCoef = 0.2f;
+    const float airDensity = 1.225f; // air density is about 1.225 kg/m³
+    // Ad = pi * r * r = 0.25 * pi * d * d
+    float Ad = 0.25f * PI * particleDiameterMeter * particleDiameterMeter;
+
+	if (particleFullInfoBuffer[i].startLifetime - particleFullInfoBuffer[i].remainingLifetime <= fixedDeltaTime)
+		particleFullInfoBuffer[i].velocity = initialVelocity;
+
+	float3 deltaVel = particleFullInfoBuffer[i].windVelocity - particleFullInfoBuffer[i].totalVelocity;
+	float3 force = 0.5f * dragCoef * airDensity * Ad * deltaVel * length(deltaVel);
+	float3 acc = force / particleMass;
+
+	particleFullInfoBuffer[i].velocity += acc * fixedDeltaTime;
+}

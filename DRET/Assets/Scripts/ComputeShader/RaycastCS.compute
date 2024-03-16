@@ -1,0 +1,264 @@
+﻿#pragma kernel CSMain
+
+struct ComputeBufferParticleInfoStruct
+{
+	float3 position;
+	float3 initialVelocity;
+	int generationTimeStamp;
+	float3 initialPosition;
+	int generationCode;
+	int particleGenerationIndex;
+};
+
+struct ComputeBufferTriangleInfoStruct
+{
+	// All these points should be in world space
+	float3 pointA;
+	float3 pointB;
+	float3 pointC;
+};
+
+struct ComputeBufferRaycastInfoStruct
+{
+	float3 origin;
+	float3 direction;
+};
+
+struct ComputeBufferRaycastResultInfoStruct
+{
+	float distance;
+	float3 hitPosition;
+	int hitParticleGenerationTimeStamp;
+	float3 hitParticleInitialVelocity;
+	float3 hitParticleInitialPosition;
+	int hitParticleGenerationCode;
+	int hitParticleGenerationIndex;
+};
+
+RWStructuredBuffer<ComputeBufferParticleInfoStruct> particleInfoBuffer;
+RWStructuredBuffer<ComputeBufferTriangleInfoStruct> triangleInfoBuffer;
+RWStructuredBuffer<ComputeBufferRaycastInfoStruct> raycastInfoBuffer;
+RWStructuredBuffer<ComputeBufferRaycastResultInfoStruct> raycastResultInfoBuffer;
+
+uniform int particleCount;
+uniform int triangleCount;
+uniform float maxRange;
+uniform float time;
+uniform float generalDropOffRate;
+uniform float vehicleVelocity;
+uniform float lidarScanTime;
+uniform float4 offsets;
+uniform float groundHeight;
+
+// static const float particleCollideRadius = 0.035f;
+// 0609 Update : Change from static const to uniform, in order to control by scripts
+uniform float particleCollideRadius;
+
+static const float PI = 3.1415926535897932384626433832795f;
+static const float minHitDistance = 1.5f;
+
+float rand01(float2 co)
+{
+	float r = frac(sin(dot(co.xy, float2(12.9898f, 78.233f))) * 43758.5453f);
+
+	if(r == 0.0)
+    	return 0.000000000001;
+  	else
+    	return r;
+}
+
+// Ref : https://github.com/thomas-moulard/gazebo-deb/blob/master/media/materials/programs/camera_noise_gaussian_fs.glsl
+float gaussrand(float id)
+{
+	// Box-Muller method for sampling from the normal distribution
+	// http://en.wikipedia.org/wiki/Normal_distribution#Generating_values_from_normal_distribution
+	// This method requires 2 uniform random inputs and produces 2 
+	// Gaussian random outputs.  We'll take a 3rd random variable and use it to
+	// switch between the two outputs.
+
+	float U, V, R, Z;
+	// Add in the CPU-supplied random offsets to generate the 3 random values that
+	// we'll use.
+	float2 co = float2(id, time);
+	U = rand01(co + float2(offsets.x, offsets.x));
+	V = rand01(co + float2(offsets.y, offsets.y));
+	R = rand01(co + float2(offsets.z, offsets.z));
+	// Switch between the two random outputs.
+	if(R < 0.5f)
+		Z = sqrt(-2.0 * log(U)) * sin(2.0 * PI * V);
+	else
+		Z = sqrt(-2.0 * log(U)) * cos(2.0 * PI * V);
+
+	// Apply the stddev and mean.
+	//Z = Z * stddev + mean;
+
+	return Z;
+}
+
+float compute_azimuth(float3 direction)
+{
+	// return range is [-PI, PI]
+	return atan2(direction.x, direction.z);
+}
+
+void reset_raycast_result(int index)
+{
+	raycastResultInfoBuffer[index].distance = maxRange;
+	raycastResultInfoBuffer[index].hitPosition = float3(0.0f, -100.0f, 0.0f);
+	raycastResultInfoBuffer[index].hitParticleGenerationTimeStamp = -1;
+	raycastResultInfoBuffer[index].hitParticleInitialVelocity = float3(0.0f, 0.0f, 0.0f);
+	raycastResultInfoBuffer[index].hitParticleInitialPosition = float3(0.0f, 0.0f, 0.0f);
+	raycastResultInfoBuffer[index].hitParticleGenerationCode = -1;
+	raycastResultInfoBuffer[index].hitParticleGenerationIndex = -1;
+}
+
+void raycast(int index)
+{
+	float3 rayOrigin = raycastInfoBuffer[index].origin;
+	float3 rayDirection = raycastInfoBuffer[index].direction;
+
+	// initialize with max lidar range
+	float closestHit = maxRange;
+	bool isHit = false;
+
+	float a = dot(rayDirection, rayDirection);
+	float radiusSquare = particleCollideRadius * particleCollideRadius;
+
+	int numberOfHit = 0;
+	int hitParticleIndex = -1;
+
+	[loop]
+	for (int particleIndex = 0; particleIndex < particleCount; ++particleIndex)
+	{
+		float3 oc = rayOrigin - particleInfoBuffer[particleIndex].position;
+		float b = dot(oc, rayDirection);
+		float c = dot(oc, oc) - radiusSquare;
+		float discriminant = b * b - a * c;
+
+		if (discriminant > 0.0f)
+		{
+			float temp = (-b - sqrt(discriminant)) / a;
+			if (temp < closestHit && temp > 0.0f)
+			{
+				closestHit = temp;
+				isHit = true;
+				hitParticleIndex = particleIndex;
+			}
+
+			temp = (-b + sqrt(discriminant)) / a;
+			if (temp < closestHit && temp > 0.0f)
+			{
+				closestHit = temp;
+				isHit = true;
+				hitParticleIndex = particleIndex;
+			}
+
+			++numberOfHit;
+		}
+	}
+
+	[loop]
+	for (int triangleIndex = 0; triangleIndex < triangleCount; ++triangleIndex)
+	{
+		float3 v0 = triangleInfoBuffer[triangleIndex].pointA;
+		float3 v1 = triangleInfoBuffer[triangleIndex].pointB;
+		float3 v2 = triangleInfoBuffer[triangleIndex].pointC;
+
+		float3 v0v1 = v1 - v0;
+		float3 v0v2 = v2 - v0;
+		float3 pvec = cross(rayDirection, v0v2);
+		float det = dot(v0v1, pvec);
+		// no culling
+		if (abs(det) < 0.00001f) continue;
+
+		float invDet = 1.0f / det;
+
+		float3 tvec = rayOrigin - v0;
+		float u = dot(tvec, pvec) * invDet;
+		float3 qvec = cross(tvec, v0v1);
+		float v = dot(rayDirection, qvec) * invDet;
+
+		if ((u < 0 || u > 1) || (v < 0 || u + v > 1)) continue;
+
+		float t = dot(v0v2, qvec) * invDet;
+
+		// fill in collision info
+		if (t > 0.0f && t < closestHit)
+		{
+			closestHit = t;
+			isHit = true;
+			hitParticleIndex = -1;
+		}
+	}
+
+	// ray-plane intersection
+	float3 planeNormal = float3(0.0f, 1.0f, 0.0f);
+	float3 planeCenter = float3(0.0f, groundHeight, 0.0f);
+	float denom = dot(rayDirection, planeNormal);
+	if (abs(denom) > 0.0001f) // epsilon
+	{
+		float t = dot(planeNormal, (planeCenter - rayOrigin)) / denom;
+		if (t > 0.0f && t < closestHit)
+		{
+			closestHit = t;
+			isHit = true;
+			hitParticleIndex = -1;
+		}
+	}
+	// for every ray not does not hit anything, do not register it to the renderer
+	// assign its hitPosition to a place where it will never be seen
+	// if (isHit == true && (numberOfHit >= 3 || numberOfHit == 0))
+	if (isHit == true && closestHit >= minHitDistance)
+	{
+		//raycastResultInfoBuffer[index].distance = closestHit + closestHit * rand_normal(index) * 0.001f;
+		raycastResultInfoBuffer[index].distance = closestHit
+			+ closestHit * gaussrand(index) * 0.002f;
+
+		raycastResultInfoBuffer[index].hitPosition = rayOrigin
+			+ raycastResultInfoBuffer[index].distance * rayDirection
+			// shift [-PI, PI] to [0, 2*PI], and divide by 2*PI to map to [0, 1]
+			+ float3(0.0f, 0.0f, lidarScanTime * ((compute_azimuth(rayDirection)) / (2.0f * PI)) * vehicleVelocity)
+			;
+
+		if(hitParticleIndex >= 0)
+		{
+			raycastResultInfoBuffer[index].hitParticleGenerationTimeStamp = particleInfoBuffer[hitParticleIndex].generationTimeStamp;
+			raycastResultInfoBuffer[index].hitParticleInitialVelocity = particleInfoBuffer[hitParticleIndex].initialVelocity;
+			raycastResultInfoBuffer[index].hitParticleInitialPosition = particleInfoBuffer[hitParticleIndex].initialPosition;
+			raycastResultInfoBuffer[index].hitParticleGenerationCode = particleInfoBuffer[hitParticleIndex].generationCode;
+			raycastResultInfoBuffer[index].hitParticleGenerationIndex = particleInfoBuffer[hitParticleIndex].particleGenerationIndex;
+		}
+		else
+		{
+			raycastResultInfoBuffer[index].hitParticleGenerationTimeStamp = -1;
+			raycastResultInfoBuffer[index].hitParticleInitialVelocity = float3(0.0f, 0.0f, 0.0f);
+			raycastResultInfoBuffer[index].hitParticleInitialPosition = float3(0.0f, 0.0f, 0.0f);
+			raycastResultInfoBuffer[index].hitParticleGenerationCode = -1;
+			raycastResultInfoBuffer[index].hitParticleGenerationIndex = -1;
+		}
+	}
+	else
+	{
+		reset_raycast_result(index);
+	}
+}
+
+[numthreads(64, 1, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+	// index equation : 
+	// 1-D index = threadId.x +
+	// threadId.y * dispatch.x * numthread.x +
+	// threadId.z * dispatch.x * numthread.x * dispatch.y * numthread.y
+	int index = id.x;
+
+	// Random ray drop-off
+	if (rand01(index) >= generalDropOffRate)
+	{
+		raycast(index);
+	}
+	else
+	{
+		reset_raycast_result(index);
+	}
+}
