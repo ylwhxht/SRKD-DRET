@@ -6,7 +6,7 @@ This is a official code release of SRKD&DRET (Sunshine to Rainstorm: Cross-Weath
 
 This code is mainly based on [OpenPCDet](https://github.com/open-mmlab/OpenPCDet) and [SPRAY](https://github.com/Wachemanston/Reconstruction-and-Synthesis-of-Lidar-Point-Clouds-of-Spray).
 
-Coming soon...
+More detailed code coming soon...
 ## Framework
 ![image](https://github.com/ylwhxht/SRKD-DRET/blob/main/framework.png?raw=true)
 
