@@ -9,7 +9,7 @@ This is a official code release of SRKD&DRET (Sunshine to Rainstorm: Cross-Weath
 
 ## Getting Started (Installation, Environment)
 
-This code is mainly based on [OpenPCDet](https://github.com/open-mmlab/OpenPCDet) and [SPRAY](https://github.com/Wachemanston/Reconstruction-and-Synthesis-of-Lidar-Point-Clouds-of-Spray).
+This code is mainly based on [OpenPCDet](https://github.com/open-mmlab/OpenPCDet), [Fog Simulation work](https://github.com/MartinHahner/LiDAR_fog_sim) and [SPRAY](https://github.com/Wachemanston/Reconstruction-and-Synthesis-of-Lidar-Point-Clouds-of-Spray).
 
 Configuration files and installation can refer to their official website guidelines.
 
@@ -28,12 +28,17 @@ More detailed guidance coming soon...
 
 **please just refer to [SPRAY](https://github.com/Wachemanston/Reconstruction-and-Synthesis-of-Lidar-Point-Clouds-of-Spray), or we will release more detailed guidance later.**
 
-*note：We have only uploaded some of the code that we have modified. If there are too many other libraries and files, please follow the SPRAY official website's instructions for installation. If you have any questions, please feel free to raise them*
+*note:We have only uploaded some of the code that we have modified. If there are too many other libraries and files, please follow the SPRAY official website's instructions for installation. If you have any questions, please feel free to raise them*
+
+The workload of reproducing SPRAY based on Unity3D virtual engine is relatively high.
+
+As a consequence, we can provide the rain particles obtained during the DRET process (txt file, Nx3 (x, y, z)) If needed, please contact huangxun@stu.xmu.edu. But please note that we cannot provide the final rainy point cloud due to Waymo's policy. Just download the rain particles and run the second stage of scene processing code to obtain the final rain point cloud.
 
 
-Meanwhile, we can provide the rain particles obtained during the DRET process (txt file, Nx3 (x, y, z))
+### Update the scene processing code for the second stage of DRET on May 9, 2024
+By running DERP_rain_simulation.py and changing it to the path of the rain particle txt file.
 
-If needed, please contact huangxun@stu.xmu.edu. But please note that we cannot provide the final rainy point cloud due to Waymo's policy.
+*Note: Part of this code is referenced from [Fog Simulation work](https://github.com/MartinHahner/LiDAR_fog_sim)*
 
 
 ## SRKD
