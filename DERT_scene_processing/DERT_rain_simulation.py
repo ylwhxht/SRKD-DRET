@@ -68,7 +68,7 @@ INTEGRAL_PATH = Path(os.path.dirname(os.path.realpath(
 
 def parse_arguments():
 
-    parser = argparse.ArgumentParser(description='LiDAR foggification')
+    parser = argparse.ArgumentParser(description='LiDAR')
 
     parser.add_argument(
         '-c', '--n_cpus', help='number of CPUs that should be used', type=int, default=mp.cpu_count())
@@ -115,7 +115,7 @@ class ParameterSet:
         self.r_range_max = 250
 
         ##########################
-        # soft target a.k.a. fog #
+        # soft target a.k.a. rain #
         ##########################
 
         # attenuation coefficient => amount of fog
@@ -131,7 +131,7 @@ class ParameterSet:
         self.beta = 0.046 / self.mor
         self.beta_min = 0.023 / self.mor
         self.beta_max = 0.092 / self.mor
-        self.beta_scale = 1000 * self.mor
+        self.beta_scale = 1000 * self.mor`
 
         ##########
         # sensor #
@@ -239,7 +239,7 @@ def get_integral_dict(p: ParameterSet) -> Dict:
     return integral_dict
 
 
-def P_R_fog_hard(p: ParameterSet, pc: np.ndarray) -> np.ndarray:
+def P_R_rain_hard(p: ParameterSet, pc: np.ndarray) -> np.ndarray:
 
     r_0 = np.linalg.norm(pc[:, 0:3], axis=1)
 
@@ -248,22 +248,22 @@ def P_R_fog_hard(p: ParameterSet, pc: np.ndarray) -> np.ndarray:
     return pc
 
 
-def P_R_rain_soft(lidar : int, scatted_idx : np.ndarray, fog_mask: np.ndarray, p: ParameterSet, pc: np.ndarray, particle: np.ndarray, particle_d: dict, original_points: np.ndarray):
+def P_R_rain_soft(lidar : int, scatted_idx : np.ndarray, rain_mask: np.ndarray, p: ParameterSet, pc: np.ndarray, particle: np.ndarray, particle_d: dict, original_points: np.ndarray):
 
     pc = copy.deepcopy(pc)
-    #pc = P_R_fog_hard(p, pc)
+    #pc = P_R_rain_hard(p, pc)
     
 
     r_zeros = np.linalg.norm(original_points[:, 0:3], axis=1)
     r_particle = np.linalg.norm(particle[:, 0:3], axis=1)
 
-    num_fog_responses = 0
+    num_rain_responses = 0
 
     cnt = 0
 
     
     for i in range(particle.shape[0]):
-        fog_response = random.uniform(0.01,0.001)
+        rain_response = random.uniform(0.01,0.001)
         if scatted_idx[int(particle[i, 3])] != 0:
             continue
         R = r_particle[i]
@@ -271,15 +271,15 @@ def P_R_rain_soft(lidar : int, scatted_idx : np.ndarray, fog_mask: np.ndarray, p
         elo = random.uniform(0,1)
         # no target add directly
         if len(particle_d[i]) == 0 and lidar != 1:
-            #num_fog_responses += 1
+            #num_rain_responses += 1
             pc = np.append(pc, np.array(
-                [particle[i, 0], particle[i, 1], particle[i, 2], fog_response, elo , -1]).reshape(1, -1), axis=0)
-            fog_mask = np.append(fog_mask, np.array([int(particle[i, 3])]), axis=0)
+                [particle[i, 0], particle[i, 1], particle[i, 2], rain_response, elo , -1]).reshape(1, -1), axis=0)
+            rain_mask = np.append(rain_mask, np.array([int(particle[i, 3])]), axis=0)
             scatted_idx[int(particle[i, 3])] = lidar
             
         
         valid_idx = -1
-        valid_fog_response = 0
+        valid_rain_response = 0
         
         for idx in particle_d[i]:
             R0 = r_zeros[idx]
@@ -289,49 +289,49 @@ def P_R_rain_soft(lidar : int, scatted_idx : np.ndarray, fog_mask: np.ndarray, p
             if R > R0 :
                 continue
             
-            fog_response = theory.P_R_fog_soft(p, R)
+            rain_response = theory.P_R_rain_soft(p, R)
 
-            fog_response /= (p.c_a * p.p_0 * p.beta)
+            rain_response /= (p.c_a * p.p_0 * p.beta)
 
-            fog_response = fog_response * \
+            rain_response = rain_response * \
                 original_points[idx, 3] * (R0 ** 2) * p.beta / p.beta_0 * 10 # / 255
             
-            x = [1.5258789e-04, 0.0006286554766120389, 1.52587890625e-05]
+            min_P_0 = 0.0006286554766120389
             
-            if fog_response > 0.0006286554766120389:
+            if rain_response > min_P_0:
                 
                 # Non noise points are preferred
-                if fog_mask[idx] == -1:
-                    #print(R0,R,fog_response)
+                if rain_mask[idx] == -1:
+                    #print(R0,R,rain_response)
                     cnt += 1
-                    num_fog_responses += 1
+                    num_rain_responses += 1
                     # find a point which is not rain
                     pc[idx, 0] = particle[i, 0]
                     pc[idx, 1] = particle[i, 1]
                     pc[idx, 2] = particle[i, 2]
-                    pc[idx, 3] = fog_response
-                    fog_mask[idx] = int(particle[i, 3])
-                    scatted_idx[int(fog_mask[idx])] = lidar
+                    pc[idx, 3] = rain_response
+                    rain_mask[idx] = int(particle[i, 3])
+                    scatted_idx[int(rain_mask[idx])] = lidar
                     valid_idx = -1
                     break
                 else:
-                    valid_fog_response = fog_response
+                    valid_rain_response = rain_response
                     valid_idx = idx
 
         if valid_idx != -1:
                 # undate memory status
-            scatted_idx[int(fog_mask[valid_idx])] = 0
+            scatted_idx[int(rain_mask[valid_idx])] = 0
             pc[valid_idx, 0] = particle[i, 0]
             pc[valid_idx, 1] = particle[i, 1]
             pc[valid_idx, 2] = particle[i, 2]
-            pc[valid_idx, 3] = valid_fog_response
+            pc[valid_idx, 3] = valid_rain_response
 
-            fog_mask[valid_idx] = int(particle[i, 3])
-            scatted_idx[int(fog_mask[valid_idx])] = lidar 
+            rain_mask[valid_idx] = int(particle[i, 3])
+            scatted_idx[int(rain_mask[valid_idx])] = lidar 
         
-    simulated_fog_pc = None
+    simulated_rain_pc = None
 
-    return pc, fog_mask, scatted_idx
+    return pc, rain_mask, scatted_idx
 
 AlllidarPositionInWaymo = [
     [1.43, 0, 2.184],
@@ -385,7 +385,7 @@ def _map(dst_folder, dstnpy_folder, parameter_set, all_paths, infos_paths, all_f
     original_points = np.concatenate((original_points, np.arange(0, original_points.shape[0], 1).reshape(-1, 1)), axis=1)
     infos = np.concatenate((infos, np.arange(0, infos.shape[0], 1).reshape(-1, 1)), axis=1)
     #label point is scatted by which particle
-    fog_mask = np.zeros(len(points), dtype=int) - 1
+    rain_mask = np.zeros(len(points), dtype=int) - 1
     #label particle is scatter or not 
     scatted_idx = np.zeros(infos.shape[0])
     for idx in range(5):
@@ -416,7 +416,7 @@ def _map(dst_folder, dstnpy_folder, parameter_set, all_paths, infos_paths, all_f
             continue
         
         info, d = Lidar_find.MatchPoint(info, pc, idx)
-        points, fog_mask, scatted_idx = P_R_rain_soft(lidar = idx + 1 , scatted_idx = scatted_idx, fog_mask = fog_mask, p=parameter_set, pc=points, particle=info, particle_d=d, original_points = original_points)
+        points, rain_mask, scatted_idx = P_R_rain_soft(lidar = idx + 1 , scatted_idx = scatted_idx, rain_mask = rain_mask, p=parameter_set, pc=points, particle=info, particle_d=d, original_points = original_points)
         
         
         points = points + [sub_x, sub_y, sub_z, 0, 0, 0]
@@ -426,10 +426,10 @@ def _map(dst_folder, dstnpy_folder, parameter_set, all_paths, infos_paths, all_f
         
 
     
-    fog_mask[fog_mask > -1] = 0
-    fog_mask[fog_mask == -1] = 1
-    #print( " scattered points : ", fog_mask[fog_mask != 1].shape[0])
-    points = np.concatenate((points, fog_mask.reshape(-1, 1)), axis=1)
+    rain_mask[rain_mask > -1] = 0
+    rain_mask[rain_mask == -1] = 1
+    #print( " scattered points : ", rain_mask[rain_mask != 1].shape[0])
+    points = np.concatenate((points, rain_mask.reshape(-1, 1)), axis=1)
     points = points.astype(np.float16)
     np.save(lidarnpy_save_path, points)
     #np.savetxt(lidar_save_path, points, fmt="%.2f %.2f %.2f %.6f %i")
