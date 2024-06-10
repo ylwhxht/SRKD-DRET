@@ -2,13 +2,15 @@
 # Sunshine to Rainstorm: Cross-Weather Knowledge Distillation for Robust 3D Object Detection (AAAI2024)
 
 
-:blush: :blush: :blush:
+:blush: :blush: :blush:	
 This is a official code release of SRKD&DRET (Sunshine to Rainstorm: Cross-Weather Knowledge Distillation for Robust 3D Object Detection). 
 
-## Framework
+
+
+## :crystal_ball: :crystal_ball: Framework
 ![image](https://github.com/ylwhxht/SRKD-DRET/blob/main/framework.png?raw=true)
 
-## Getting Started (Installation, Environment)
+## :confetti_ball: :confetti_ball: Getting Started (Installation, Environment, Running)
 
 This code is mainly based on [OpenPCDet](https://github.com/open-mmlab/OpenPCDet), [Fog Simulation work](https://github.com/MartinHahner/LiDAR_fog_sim) and [SPRAY](https://github.com/Wachemanston/Reconstruction-and-Synthesis-of-Lidar-Point-Clouds-of-Spray).
 
@@ -22,7 +24,7 @@ We tested on the following environment:
 * CUDA 11.3
 
 
-## DRET 
+## :balloon: :balloon: DRET 
 
 
 ### First Stage (DRET folder)
@@ -51,7 +53,7 @@ please just refer to [Fog Simulation work](https://github.com/MartinHahner/LiDAR
 By running **DERP_rain_simulation.py** and changing it to the path of the rain particle txt file.
 
 
-## SRKD
+## :balloon: :balloon: SRKD
 
 ### Installation
 
