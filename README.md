@@ -27,9 +27,9 @@ We tested on the following environment:
 ## :balloon: :balloon: DRET 
 
 
-### First Stage (DRET folder)
+### :page_with_curl: First Stage (DRET folder)
 
-#### Installation and Running
+#### :closed_book: Installation and Running
 
 **please just refer to [SPRAY](https://github.com/Wachemanston/Reconstruction-and-Synthesis-of-Lidar-Point-Clouds-of-Spray).**
 
@@ -43,25 +43,25 @@ As a consequence, we can provide the following rain particles obtained during th
 [Rain Particle File Link Here](https://drive.google.com/file/d/1q5HMEo3dayOy1GqRCHmVNiYxCI1jkABd/view?usp=drive_link)
 
 
-### Second Stage (DRET Rain Simulation folder)
-#### Installation
+### :page_with_curl: Second Stage (DRET Rain Simulation folder)
+#### :closed_book: Installation
 
 please just refer to [Fog Simulation work](https://github.com/MartinHahner/LiDAR_fog_sim)
 
-#### Running
+#### :closed_book: Running
 
 By running **DERP_rain_simulation.py** and changing it to the path of the rain particle txt file.
 
 
 ## :balloon: :balloon: SRKD
 
-### Installation
+### :page_with_curl: Installation
 
 please just refer to [OpenPCDet](https://github.com/open-mmlab/OpenPCDet).
 
 
-### Running 
-####  train
+### :page_with_curl: Running 
+#### :closed_book: train
 * **multi-GPUs**
 
 `bash scripts/dist_train.sh num_gpus --cfg_file your_cfg --batch_size your_batch --workers your_worker --epochs your_epoch --extra_tag your_tag`
