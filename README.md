@@ -55,13 +55,13 @@ By running **DERP_rain_simulation.py** and changing it to the path of the rain p
 
 ## :balloon: :balloon: SRKD
 
-### :page_with_curl: Installation
+### :closed_book: Installation
 
 please just refer to [OpenPCDet](https://github.com/open-mmlab/OpenPCDet).
 
 
-### :page_with_curl: Running 
-#### :closed_book: train
+### :closed_book: Running 
+#### :orange_book: train
 * **multi-GPUs**
 
 `bash scripts/dist_train.sh num_gpus --cfg_file your_cfg --batch_size your_batch --workers your_worker --epochs your_epoch --extra_tag your_tag`
@@ -75,7 +75,7 @@ please just refer to [OpenPCDet](https://github.com/open-mmlab/OpenPCDet).
 
 `python3 train.py --cfg_file cfgs/waymo_models/pv_rcnn_plusplus_KD.yaml --batch_size 4 --workers 2 --epochs 50 --extra_tag "pv_rcnn++_fullKD"`
 
-#### test
+#### :orange_book: test
 * **all_ckpt**
 
 
