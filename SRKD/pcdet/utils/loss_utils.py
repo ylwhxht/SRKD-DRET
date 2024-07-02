@@ -298,54 +298,54 @@ def get_InsRoIFeature_KD(batch_dict: dict, batch_dict_rain: dict, pairloss):
     box_idx_num = np.zeros((batch_dict['batch_size'],batch_dict['gt_boxes'].shape[1]),dtype = np.int16)
     box_idx_rain_num = np.zeros((batch_dict['batch_size'],batch_dict['gt_boxes'].shape[1]),dtype = np.int16)
     
-    # for bs_idx in range(batch_dict['batch_size']):
-    #     #get  points in gt_boxes under rain and sun
-    #     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!notice!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!: 
-    #     #bs_idx is batch_index in sun batches, however rain_idx[bs_idx] only then is matched batch_index in rain batches
-    #     points = batch_dict['points'].cpu().numpy()
-    #     points = points[points[:,0]==bs_idx][:, 1:4]
+    for bs_idx in range(batch_dict['batch_size']):
+        #get  points in gt_boxes under rain and sun
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!notice!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!: 
+        #bs_idx is batch_index in sun batches, however rain_idx[bs_idx] only then is matched batch_index in rain batches
+        points = batch_dict['points'].cpu().numpy()
+        points = points[points[:,0]==bs_idx][:, 1:4]
 
-    #     gt_boxes = batch_dict['gt_boxes'][bs_idx, :, 0:7].cpu().numpy()
-    #     box_idxs_of_pts = roiaware_pool3d_utils.points_in_boxes_gpu(
-    #                 torch.from_numpy(points).unsqueeze(dim=0).float().cuda(),
-    #                 torch.from_numpy(gt_boxes).unsqueeze(dim=0).float().cuda()
-    #             ).long().squeeze(dim=0).cpu().numpy()
+        gt_boxes = batch_dict['gt_boxes'][bs_idx, :, 0:7].cpu().numpy()
+        box_idxs_of_pts = roiaware_pool3d_utils.points_in_boxes_gpu(
+                    torch.from_numpy(points).unsqueeze(dim=0).float().cuda(),
+                    torch.from_numpy(gt_boxes).unsqueeze(dim=0).float().cuda()
+                ).long().squeeze(dim=0).cpu().numpy()
         
-    #     points_rain = batch_dict_rain['points'].cpu().numpy()
-    #     points_rain = points_rain[points_rain[:,0] == int(rain_idx[bs_idx])][:, 1:4]
+        points_rain = batch_dict_rain['points'].cpu().numpy()
+        points_rain = points_rain[points_rain[:,0] == int(rain_idx[bs_idx])][:, 1:4]
         
-    #     box_idxs_of_pts_rain = roiaware_pool3d_utils.points_in_boxes_gpu(
-    #                 torch.from_numpy(points_rain).unsqueeze(dim=0).float().cuda(),
-    #                 torch.from_numpy(gt_boxes).unsqueeze(dim=0).float().cuda()
-    #             ).long().squeeze(dim=0).cpu().numpy()
+        box_idxs_of_pts_rain = roiaware_pool3d_utils.points_in_boxes_gpu(
+                    torch.from_numpy(points_rain).unsqueeze(dim=0).float().cuda(),
+                    torch.from_numpy(gt_boxes).unsqueeze(dim=0).float().cuda()
+                ).long().squeeze(dim=0).cpu().numpy()
         
-    #     #calculate the number of points in each object under rain and sun
+        #calculate the number of points in each object under rain and sun
         
-    #     for i in range(gt_boxes.shape[0]):
-    #         box_idx_num[bs_idx, i] = (box_idxs_of_pts == i).sum()
-    #         box_idx_rain_num[bs_idx, i] = (box_idxs_of_pts_rain == i).sum()
-    #         points_obj.append(points[box_idxs_of_pts == i])
-    #         points_obj_rain.append(points_rain[box_idxs_of_pts_rain == i])
+        for i in range(gt_boxes.shape[0]):
+            box_idx_num[bs_idx, i] = (box_idxs_of_pts == i).sum()
+            box_idx_rain_num[bs_idx, i] = (box_idxs_of_pts_rain == i).sum()
+            points_obj.append(points[box_idxs_of_pts == i])
+            points_obj_rain.append(points_rain[box_idxs_of_pts_rain == i])
             
 
-    # assert feature_sun.shape == feature_rain.shape
+    assert feature_sun.shape == feature_rain.shape
     
     
-    # eps = 0.0001
+    eps = 0.0001
     
-    # min_box_num = np.array(box_idx_num, dtype = int)
-    # # shape = chamfer_distance_numpy(points_obj,points_obj_rain).cuda()
+    min_box_num = np.array(box_idx_num, dtype = int)
+    # shape = chamfer_distance_numpy(points_obj,points_obj_rain).cuda()
 
-    # min_box_num[box_idx_num > box_idx_rain_num] = box_idx_rain_num[box_idx_num > box_idx_rain_num]
-    # weight = torch.tanh(torch.tensor(min_box_num / np.abs(box_idx_num - box_idx_rain_num + eps))).reshape(-1).cuda()
+    min_box_num[box_idx_num > box_idx_rain_num] = box_idx_rain_num[box_idx_num > box_idx_rain_num]
+    weight = torch.tanh(torch.tensor(min_box_num / np.abs(box_idx_num - box_idx_rain_num + eps))).reshape(-1).cuda()
     
     
     # for i in range(len(dist)):
     #     print("{%d, %d} : Shape_Weight = %.4f, Density_Weight = %.4f, Final_Weight = %.4f"%(box_idx_num.reshape(-1)[i].item(), box_idx_rain_num.reshape(-1)[i].item(), dist[i].item(),  weight[i].item(), (dist[i] * weight[i]).item()))
     distance = LossFun(feature_sun, feature_rain)
-    #kd_feature_loss = (torch.mean(distance, dim = 1) * weight).mean() * pairloss
+    kd_feature_loss = (torch.mean(distance, dim = 1) * weight).mean() * pairloss
     
-    kd_feature_loss = (torch.mean(distance, dim = 1)).mean() * pairloss
+    #kd_feature_loss = (torch.mean(distance, dim = 1)).mean() * pairloss
     
     # visual = torch.mean(distance, dim = [1,2,3,4])
     # np.save('/home/hx/models/pc/sun_'+str(kd_feature_loss.item()), np.array(batch_dict['points'].cpu()))
@@ -509,13 +509,11 @@ def get_Sim_KD(batch_dict: dict, batch_dict_rain: dict, weight):
     return kd_sim_loss
 
 def getKDloss(ret_dict, ret_dict_rain):
-    #InsRoIFeatureKD_loss = get_InsRoIFeature_KD(ret_dict, ret_dict_rain, 4.0)
-    #print("InsRoIFeatureKD_loss", InsRoIFeatureKD_loss)
-    LogitKD_loss = get_Logit_KD(ret_dict, ret_dict_rain, 15, 0.2) * 0.5
-    # print("InsRoIFeatureKD_loss : ",InsRoIFeatureKD_loss)
-    # print("LogitKD_loss : ", LogitKD_loss)
-    #SimKD_loss = get_Sim_KD(ret_dict, ret_dict_rain, 2)
-    #return InsRoIFeatureKD_loss, LogitKD_loss
+    InsRoIFeatureKD_loss = get_InsRoIFeature_KD(ret_dict, ret_dict_rain, 4.0)
+    print("InsRoIFeatureKD_loss", InsRoIFeatureKD_loss)
+    LogitKD_loss = get_Logit_KD(ret_dict, ret_dict_rain, 1, 0.02)
+    print("LogitKD_loss : ", LogitKD_loss)
+    return InsRoIFeatureKD_loss, LogitKD_loss
     return -1, LogitKD_loss
 
 
